@@ -19,7 +19,7 @@
     "build": "tsc -p tsconfig.json",
     "check": "tsc --noEmit -p tsconfig.json",
     "test": "npm run build && node --test dist/**/*.test.js",
-    "smoke": "npm run build && node dist/cli.js compare tests/fixtures/before.log tests/fixtures/after.jsonl --format json >/tmp/sessiondiff-smoke.json && node dist/cli.js summarize tests/fixtures/tool-blocks.log --format markdown >/tmp/sessiondiff-smoke.md",
+    "smoke": "npm run build && node dist/src/cli.js compare tests/fixtures/before.log tests/fixtures/after.jsonl --format json >/tmp/sessiondiff-smoke.json && node dist/src/cli.js summarize tests/fixtures/tool-blocks.log --format markdown >/tmp/sessiondiff-smoke.md",
     "package:smoke": "npm pack --dry-run",
     "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
   },
