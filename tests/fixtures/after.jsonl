@@ -1,0 +1,2 @@
+{"command":"npm test","output":"ok 1 build passed"}
+{"command":"npm run smoke","output":"ok smoke verified","file":"src/render.ts"}

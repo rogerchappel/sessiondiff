@@ -1,0 +1,3 @@
+tool_call: {"cmd":"npm run build"}
+```
+verification complete for src/cli.ts
