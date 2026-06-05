@@ -4,11 +4,11 @@
   "description": "Local-first CLI for comparing coding-agent session logs.",
   "type": "module",
   "bin": {
-    "sessiondiff": "./dist/cli.js"
+    "sessiondiff": "./dist/src/cli.js"
   },
-  "main": "./dist/index.js",
+  "main": "./dist/src/index.js",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/src/index.js"
   },
   "files": [
     "dist",
