@@ -57,6 +57,10 @@ You can also run the local validation helper:
 bash scripts/validate.sh
 ```
 
+## Release readiness
+
+Use [docs/release-readiness.md](docs/release-readiness.md) before opening release PRs or tagging a release.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution expectations. Changes
