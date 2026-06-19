@@ -11,7 +11,8 @@
     ".": "./dist/src/index.js"
   },
   "files": [
-    "dist",
+    "dist/src",
+    "docs",
     "README.md",
     "LICENSE",
     "SECURITY.md",
