@@ -9,9 +9,14 @@ format and uses semantic versioning when versioned releases are published.
 
 ### Added
 
+- Added release smoke coverage for JSON compare output and invalid format errors.
 - Added a release-readiness checklist for local verification and package review.
 
 - Initial project setup.
+
+### Fixed
+
+- Included `docs/` in the package allowlist so README-linked release-readiness docs ship with the tarball.
 
 ## Release Links
 

@@ -46,6 +46,33 @@ test("compares fixture sessions as markdown", async () => {
   assert.match(stdout, /## Commands/);
 });
 
+test("compares fixture sessions as JSON for automation", async () => {
+  const { stdout, stderr } = await execFileAsync(process.execPath, [
+    "dist/src/cli.js",
+    "compare",
+    "tests/fixtures/before.log",
+    "tests/fixtures/after.jsonl",
+    "--format=json"
+  ]);
+  const diff = JSON.parse(stdout) as {
+    before: { source: string };
+    after: { source: string };
+    changes: { commands: { added: Array<{ command: string }> } };
+  };
+
+  assert.equal(stderr, "");
+  assert.equal(diff.before.source, "before.log");
+  assert.equal(diff.after.source, "after.jsonl");
+  assert.ok(diff.changes.commands.added.some((command) => command.command === "npm run smoke"));
+});
+
+test("rejects unsupported output formats", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/src/cli.js", "summarize", "tests/fixtures/tool-blocks.log", "--format", "xml"]),
+    /--format must be markdown or json/
+  );
+});
+
 test("fixture files remain available for smoke checks", async () => {
   const fixture = await readFile("tests/fixtures/before.log", "utf8");
 
