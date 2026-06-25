@@ -5,6 +5,7 @@ This directory holds project documentation.
 ## Contents
 
 - [Release readiness](release-readiness.md)
+- [Supported inputs](supported-inputs.md)
 - [Contributing guide](../CONTRIBUTING.md)
 - [Security policy](../SECURITY.md)
 - [Agent instructions](../AGENTS.md)

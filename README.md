@@ -36,6 +36,9 @@ sessiondiff compare <before.log> <after.log> --format markdown
 sessiondiff summarize <run.log> --format json
 ```
 
+See [supported inputs](docs/supported-inputs.md) for the current parser
+contract and the privacy boundaries to review before sharing generated reports.
+
 ## Verify
 
 Run the release-candidate checks before opening a PR or publishing a package:
