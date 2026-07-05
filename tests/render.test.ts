@@ -9,3 +9,12 @@ test("renders summarized session output as JSON and markdown", () => {
   assert.match(renderSummaryMarkdown(summary), /Session Summary: run\.log/);
   assert.match(renderSummaryMarkdown(summary), /npm test/);
 });
+
+test("summarizes approvals and blockers", () => {
+  const summary = summarizeSession("Asked for approval before deploy\nBlocked: missing token\n", "run.log");
+
+  assert.equal(summary.approvals.length, 1);
+  assert.equal(summary.blockers.length, 1);
+  assert.match(renderSummaryMarkdown(summary), /## Approvals/);
+  assert.match(renderSummaryMarkdown(summary), /## Blockers/);
+});

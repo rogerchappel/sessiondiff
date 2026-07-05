@@ -39,6 +39,12 @@ sessiondiff summarize <run.log> --format json
 See [supported inputs](docs/supported-inputs.md) for the current parser
 contract and the privacy boundaries to review before sharing generated reports.
 
+## Agent Skill
+
+See [SKILL.md](SKILL.md) for the reusable agent workflow, side-effect
+boundaries, approval requirements, and validation steps for transcript
+comparison.
+
 ## Verify
 
 Run the release-candidate checks before opening a PR or publishing a package:

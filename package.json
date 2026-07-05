@@ -13,6 +13,7 @@
   "files": [
     "dist/src",
     "docs",
+    "SKILL.md",
     "README.md",
     "LICENSE",
     "SECURITY.md",

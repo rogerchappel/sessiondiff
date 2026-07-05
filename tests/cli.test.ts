@@ -58,11 +58,13 @@ test("compares fixture sessions as JSON for automation", async () => {
     before: { source: string };
     after: { source: string };
     changes: { commands: { added: Array<{ command: string }> } };
+    verdict: { status: string };
   };
 
   assert.equal(stderr, "");
   assert.equal(diff.before.source, "before.log");
   assert.equal(diff.after.source, "after.jsonl");
+  assert.equal(diff.verdict.status, "improved");
   assert.ok(diff.changes.commands.added.some((command) => command.command === "npm run smoke"));
 });
 
