@@ -1,4 +1,4 @@
-import type { ExtractedCommand, SessionDiff, SessionSummary, TestResult, ValueDiff } from "./index.js";
+import type { DiffVerdict, ExtractedCommand, SessionDiff, SessionSignal, SessionSummary, TestResult, ValueDiff } from "./index.js";
 
 const commitPattern = /\b[0-9a-f]{7,40}\b/gi;
 const pathPattern =
@@ -10,6 +10,10 @@ const finalClaimPattern =
   /\b(?:final|summary|done|completed|implemented|fixed|changed|verification|verified|tests?|smoke|build)\b/i;
 const testPattern =
   /\b(?:pass(?:ed|es)?|fail(?:ed|ure)?|error|ok|not ok|tests?|test suite|build|typecheck|lint|smoke|validated?|verification)\b/i;
+const approvalPattern =
+  /\b(?:approval|approved|permission|confirmed|consent|human\s+confirmed|asked\s+before|requires\s+approval)\b/i;
+const blockerPattern =
+  /\b(?:blocked|blocker|cannot\s+continue|stuck|needs\s+(?:user|human)|missing\s+(?:credential|token|file|input)|permission\s+denied)\b/i;
 const commandFieldNames = new Set(["command", "cmd", "shell", "input", "args"]);
 
 export function summarizeSession(text: string, source = "session"): SessionSummary {
@@ -25,6 +29,8 @@ export function summarizeSession(text: string, source = "session"): SessionSumma
     files: [],
     commits: [],
     tests: [],
+    approvals: [],
+    blockers: [],
     finalClaims: []
   };
 
@@ -70,6 +76,8 @@ export function summarizeSession(text: string, source = "session"): SessionSumma
   summary.commits = [...commits].sort();
   summary.commands = dedupeCommands(summary.commands);
   summary.tests = dedupeBy(summary.tests, testKey);
+  summary.approvals = dedupeBy(summary.approvals, signalKey);
+  summary.blockers = dedupeBy(summary.blockers, signalKey);
   summary.finalClaims = unique(summary.finalClaims);
 
   return summary;
@@ -87,8 +95,11 @@ export function compareSessions(beforeText: string, afterText: string, beforeSou
       files: diffBy(before.files, after.files, (value) => value),
       commits: diffBy(before.commits, after.commits, (value) => value),
       tests: diffBy(before.tests, after.tests, testKey),
+      approvals: diffBy(before.approvals, after.approvals, signalKey),
+      blockers: diffBy(before.blockers, after.blockers, signalKey),
       finalClaims: diffBy(before.finalClaims, after.finalClaims, (value) => value)
-    }
+    },
+    verdict: classifyDiff(before, after)
   };
 }
 
@@ -113,6 +124,14 @@ function ingestPlainLine(
       status: inferTestStatus(line),
       line: lineNumber
     });
+  }
+
+  if (approvalPattern.test(line)) {
+    summary.approvals.push(toSignal(line, lineNumber));
+  }
+
+  if (blockerPattern.test(line)) {
+    summary.blockers.push(toSignal(line, lineNumber));
   }
 
   if (finalClaimPattern.test(line) && line.trim().length > 0) {
@@ -175,6 +194,12 @@ function ingestJsonValue(
       addMatches(raw, commitPattern, commits, (commit) => commit.toLowerCase());
       if (testPattern.test(raw)) {
         summary.tests.push({ text: compact(raw), status: inferTestStatus(raw), line: lineNumber });
+      }
+      if (approvalPattern.test(raw)) {
+        summary.approvals.push(toSignal(raw, lineNumber));
+      }
+      if (blockerPattern.test(raw)) {
+        summary.blockers.push(toSignal(raw, lineNumber));
       }
       if (finalClaimPattern.test(raw)) {
         summary.finalClaims.push(compact(raw));
@@ -254,6 +279,50 @@ function inferTestStatus(text: string): TestResult["status"] {
   return "unknown";
 }
 
+function classifyDiff(before: SessionSummary, after: SessionSummary): DiffVerdict {
+  const reasons: string[] = [];
+  const beforeFailed = before.tests.filter((test) => test.status === "fail").length;
+  const afterFailed = after.tests.filter((test) => test.status === "fail").length;
+  const beforePassed = before.tests.filter((test) => test.status === "pass").length;
+  const afterPassed = after.tests.filter((test) => test.status === "pass").length;
+
+  if (afterFailed > beforeFailed) {
+    reasons.push(`more failing checks (${beforeFailed} -> ${afterFailed})`);
+  }
+  if (afterFailed < beforeFailed) {
+    reasons.push(`fewer failing checks (${beforeFailed} -> ${afterFailed})`);
+  }
+  if (afterPassed > beforePassed) {
+    reasons.push(`more passing checks (${beforePassed} -> ${afterPassed})`);
+  }
+  if (after.blockers.length > before.blockers.length) {
+    reasons.push(`more blockers (${before.blockers.length} -> ${after.blockers.length})`);
+  }
+  if (after.blockers.length < before.blockers.length) {
+    reasons.push(`fewer blockers (${before.blockers.length} -> ${after.blockers.length})`);
+  }
+
+  if (reasons.length === 0) {
+    const changed =
+      before.commands.length !== after.commands.length ||
+      before.files.length !== after.files.length ||
+      before.finalClaims.length !== after.finalClaims.length;
+    return { status: changed ? "changed" : "unchanged", reasons: changed ? ["inventory changed without a clear pass/fail signal"] : [] };
+  }
+
+  if (afterFailed > beforeFailed || after.blockers.length > before.blockers.length) {
+    return { status: "regressed", reasons };
+  }
+  if (afterFailed < beforeFailed || afterPassed > beforePassed || after.blockers.length < before.blockers.length) {
+    return { status: "improved", reasons };
+  }
+  return { status: "changed", reasons };
+}
+
+function toSignal(text: string, line: number): SessionSignal {
+  return { text: compact(text), line };
+}
+
 function compact(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
@@ -300,4 +369,8 @@ function commandKey(command: ExtractedCommand): string {
 
 function testKey(test: TestResult): string {
   return `${test.status}:${test.text}`;
+}
+
+function signalKey(signal: SessionSignal): string {
+  return signal.text;
 }

@@ -7,6 +7,8 @@ export interface SessionSummary {
   files: string[];
   commits: string[];
   tests: TestResult[];
+  approvals: SessionSignal[];
+  blockers: SessionSignal[];
   finalClaims: string[];
 }
 
@@ -28,6 +30,11 @@ export interface TestResult {
   line: number;
 }
 
+export interface SessionSignal {
+  text: string;
+  line: number;
+}
+
 export interface SessionDiff {
   before: SessionSummary;
   after: SessionSummary;
@@ -36,14 +43,22 @@ export interface SessionDiff {
     files: ValueDiff<string>;
     commits: ValueDiff<string>;
     tests: ValueDiff<TestResult>;
+    approvals: ValueDiff<SessionSignal>;
+    blockers: ValueDiff<SessionSignal>;
     finalClaims: ValueDiff<string>;
   };
+  verdict: DiffVerdict;
 }
 
 export interface ValueDiff<T> {
   added: T[];
   removed: T[];
   unchanged: T[];
+}
+
+export interface DiffVerdict {
+  status: "improved" | "regressed" | "changed" | "unchanged";
+  reasons: string[];
 }
 
 export { compareSessions, summarizeSession } from "./session.js";
