@@ -17,6 +17,8 @@ export function renderSummaryMarkdown(summary: SessionSummary): string {
     renderList("Files", summary.files),
     renderList("Commits", summary.commits),
     renderList("Tests and Checks", summary.tests.map((test) => `${test.status}: ${test.text} (line ${test.line})`)),
+    renderList("Approvals", summary.approvals.map((signal) => `${signal.text} (line ${signal.line})`)),
+    renderList("Blockers", summary.blockers.map((signal) => `${signal.text} (line ${signal.line})`)),
     renderList("Final Claims", summary.finalClaims),
     ""
   ].join("\n");
@@ -31,10 +33,16 @@ export function renderCompareMarkdown(diff: SessionDiff): string {
     "",
     "## After",
     renderStats(diff.after),
+    "## Verdict",
+    "",
+    `- Status: ${diff.verdict.status}`,
+    ...diff.verdict.reasons.map((reason) => `- Reason: ${reason}`),
     renderDiffList("Commands", diff.changes.commands.added.map((command) => command.command), diff.changes.commands.removed.map((command) => command.command)),
     renderDiffList("Files", diff.changes.files.added, diff.changes.files.removed),
     renderDiffList("Commits", diff.changes.commits.added, diff.changes.commits.removed),
     renderDiffList("Tests and Checks", diff.changes.tests.added.map((test) => `${test.status}: ${test.text}`), diff.changes.tests.removed.map((test) => `${test.status}: ${test.text}`)),
+    renderDiffList("Approvals", diff.changes.approvals.added.map((signal) => signal.text), diff.changes.approvals.removed.map((signal) => signal.text)),
+    renderDiffList("Blockers", diff.changes.blockers.added.map((signal) => signal.text), diff.changes.blockers.removed.map((signal) => signal.text)),
     renderDiffList("Final Claims", diff.changes.finalClaims.added, diff.changes.finalClaims.removed),
     ""
   ].join("\n");
