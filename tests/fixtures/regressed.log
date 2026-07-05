@@ -1,0 +1,3 @@
+{"cmd":"npm test","message":"Tests failed with one blocker"}
+Blocked: missing API token for integration smoke.
+Final summary: could not complete verification.
