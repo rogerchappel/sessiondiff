@@ -87,3 +87,7 @@ reports, or generated diffs.
 ## License
 
 MIT
+
+## Limitations
+
+sessiondiff summarizes local log text and deterministic matches. It can miss domain-specific failures, over-group unrelated lines, or redact context that a human reviewer still needs, so use the output as triage evidence rather than the final incident record.
