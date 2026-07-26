@@ -4,7 +4,7 @@ const commitPattern = /\b[0-9a-f]{7,40}\b/gi;
 const pathPattern =
   /(?:(?:\.{1,2}|~)?\/)?(?:[\w@.-]+\/)+(?:[\w@.-]+)(?::\d+)?|\b[\w@.-]+\.(?:[cm]?[jt]sx?|json|md|ya?ml|toml|lock|sh|py|go|rs|java|rb|php|css|scss|html)\b/g;
 const shellPromptPattern = /^\s*(?:[$>]|\+\s|(?:bash|zsh|sh)\s*[-$])\s*(.+)$/i;
-const toolStartPattern = /^\s*(?:tool[_ -]?call|function[_ -]?call|<tool>|```(?:tool|json|sh|bash)?)[:\s]*(.*)$/i;
+const toolStartPattern = /^\s*(?:tool[_ -]?call|function[_ -]?call|<tool>|```tool)[:\s]*(.*)$/i;
 const toolEndPattern = /^\s*(?:<\/tool>|```)\s*$/;
 const finalClaimPattern =
   /\b(?:final|summary|done|completed|implemented|fixed|changed|verification|verified|tests?|smoke|build)\b/i;
@@ -46,6 +46,7 @@ export function summarizeSession(text: string, source = "session"): SessionSumma
     if (jsonValue !== undefined) {
       summary.stats.jsonlRecords += 1;
       ingestJsonValue(jsonValue, lineNumber, summary, files, commits);
+      return;
     }
 
     if (inToolBlock) {
@@ -57,11 +58,15 @@ export function summarizeSession(text: string, source = "session"): SessionSumma
       } else {
         toolBlockLines.push(line);
       }
-    } else if (toolStartPattern.test(line)) {
+      return;
+    }
+
+    if (toolStartPattern.test(line)) {
       inToolBlock = true;
       toolBlockStart = lineNumber;
       const firstLine = line.replace(toolStartPattern, "$1").trim();
       toolBlockLines = firstLine ? [firstLine] : [];
+      return;
     }
 
     ingestPlainLine(line, lineNumber, summary, files, commits);
