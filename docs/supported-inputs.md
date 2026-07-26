@@ -10,7 +10,10 @@ committing any generated report.
 - Plain text terminal logs with shell commands, file paths, and verification
   output.
 - JSONL transcript exports where each line is an object with text-like content.
-- Simple tool-call blocks that include command, file, or test evidence.
+- Explicit tool-call blocks that start with `tool_call`, `function_call`,
+  `<tool>`, or a `` ```tool `` fence and include command, file, or test
+  evidence. Ordinary Markdown and language-tagged code fences are treated as
+  plain text, not tool calls.
 
 The fixture smoke currently exercises a plain text run, a JSONL run, and a log
 with tool-block sections. Use those fixtures as the best description of the
