@@ -10,6 +10,12 @@ committing any generated report.
 - Plain text terminal logs with shell commands, file paths, and verification
   output.
 - JSONL transcript exports where each line is an object with text-like content.
+  Object fields and array items are traversed recursively, including arrays that
+  mix strings, objects, and further arrays. Command, test, file, commit, and
+  signal evidence in those containers is included; duplicate commands, files,
+  and commits are reported once. Each line must still be a JSON object: a
+  top-level array is treated as plain text, and non-text scalar values do not
+  contribute evidence.
 - Explicit tool-call blocks that start with `tool_call`, `function_call`,
   `<tool>`, or a `` ```tool `` fence and include command, file, or test
   evidence. Ordinary Markdown and language-tagged code fences are treated as

@@ -181,6 +181,12 @@ function ingestJsonValue(
     ingestPlainLine(value, lineNumber, summary, files, commits);
     return;
   }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      ingestJsonValue(item, lineNumber, summary, files, commits);
+    }
+    return;
+  }
   if (!isRecord(value)) {
     return;
   }
@@ -209,14 +215,7 @@ function ingestJsonValue(
       if (finalClaimPattern.test(raw)) {
         summary.finalClaims.push(compact(raw));
       }
-    } else if (Array.isArray(raw)) {
-      for (const item of raw) {
-        if (typeof item === "string") {
-          addMatches(item, pathPattern, files);
-          addMatches(item, commitPattern, commits, (commit) => commit.toLowerCase());
-        }
-      }
-    } else if (isRecord(raw)) {
+    } else {
       ingestJsonValue(raw, lineNumber, summary, files, commits);
     }
   }
