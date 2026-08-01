@@ -12,6 +12,31 @@ test("ingests each JSONL record exactly once", () => {
   assert.deepEqual(summary.finalClaims, ["Tests failed with one blocker"]);
 });
 
+test("recursively ingests evidence in nested JSONL arrays exactly once", () => {
+  const summary = summarizeSession(JSON.stringify({
+    events: [
+      { command: "npm test", output: "Tests passed in src/session.ts at commit abc1234" },
+      "Approved for release",
+      [{ message: "Final result completed" }, { command: "npm test" }]
+    ]
+  }));
+
+  assert.equal(summary.stats.jsonlRecords, 1);
+  assert.deepEqual(summary.commands.map(({ command }) => command), ["npm test"]);
+  assert.deepEqual(summary.tests, [
+    { text: "npm test", status: "unknown", line: 1 },
+    { text: "Tests passed in src/session.ts at commit abc1234", status: "pass", line: 1 }
+  ]);
+  assert.deepEqual(summary.files, ["src/session.ts"]);
+  assert.deepEqual(summary.commits, ["abc1234"]);
+  assert.deepEqual(summary.approvals, [{ text: "Approved for release", line: 1 }]);
+  assert.deepEqual(summary.finalClaims, [
+    "Final result completed",
+    "Tests passed in src/session.ts at commit abc1234",
+    "npm test"
+  ]);
+});
+
 test("does not treat ordinary fenced prose or code as a tool block", () => {
   const prose = summarizeSession("```\nordinary prose\n```");
   const code = summarizeSession("```ts\nconst answer = 42;\n```");
