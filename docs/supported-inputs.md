@@ -30,6 +30,10 @@ node dist/src/cli.js summarize tests/fixtures/tool-blocks.log --format markdown
 node dist/src/cli.js compare tests/fixtures/before.log tests/fixtures/after.jsonl --format json
 ```
 
+Input paths are positional. The CLI accepts `--format markdown|json`,
+`--format=markdown|json`, and `-f markdown|json`; unknown options are rejected
+instead of being interpreted as paths.
+
 ## Boundaries
 
 - The CLI does not call hosted model, agent, or transcript APIs.
