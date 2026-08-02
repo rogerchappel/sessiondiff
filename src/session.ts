@@ -299,6 +299,9 @@ function classifyDiff(before: SessionSummary, after: SessionSummary): DiffVerdic
   if (afterPassed > beforePassed) {
     reasons.push(`more passing checks (${beforePassed} -> ${afterPassed})`);
   }
+  if (afterPassed < beforePassed) {
+    reasons.push(`fewer passing checks (${beforePassed} -> ${afterPassed})`);
+  }
   if (after.blockers.length > before.blockers.length) {
     reasons.push(`more blockers (${before.blockers.length} -> ${after.blockers.length})`);
   }
@@ -310,11 +313,15 @@ function classifyDiff(before: SessionSummary, after: SessionSummary): DiffVerdic
     const changed =
       before.commands.length !== after.commands.length ||
       before.files.length !== after.files.length ||
+      before.commits.length !== after.commits.length ||
+      before.tests.length !== after.tests.length ||
+      before.approvals.length !== after.approvals.length ||
+      before.blockers.length !== after.blockers.length ||
       before.finalClaims.length !== after.finalClaims.length;
     return { status: changed ? "changed" : "unchanged", reasons: changed ? ["inventory changed without a clear pass/fail signal"] : [] };
   }
 
-  if (afterFailed > beforeFailed || after.blockers.length > before.blockers.length) {
+  if (afterFailed > beforeFailed || afterPassed < beforePassed || after.blockers.length > before.blockers.length) {
     return { status: "regressed", reasons };
   }
   if (afterFailed < beforeFailed || afterPassed > beforePassed || after.blockers.length < before.blockers.length) {

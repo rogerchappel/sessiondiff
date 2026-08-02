@@ -70,3 +70,34 @@ test("keeps mixed JSONL and explicit tool evidence stable in comparisons", () =>
     "fewer blockers (1 -> 0)"
   ]);
 });
+
+test("treats losing a passing check as a regression", () => {
+  const diff = compareSessions("Tests passed", "Tests pending");
+
+  assert.equal(diff.verdict.status, "regressed");
+  assert.deepEqual(diff.verdict.reasons, ["fewer passing checks (1 -> 0)"]);
+});
+
+test("preserves failure and blocker regression precedence over improvements", () => {
+  const diff = compareSessions("Tests failed", "Tests passed\nBlocked: missing input");
+
+  assert.equal(diff.verdict.status, "regressed");
+  assert.deepEqual(diff.verdict.reasons, [
+    "fewer failing checks (1 -> 0)",
+    "more passing checks (0 -> 1)",
+    "more blockers (0 -> 1)"
+  ]);
+});
+
+test("reports signal-only inventory changes instead of unchanged", () => {
+  const diff = compareSessions("No signal", "Approval required");
+
+  assert.equal(diff.verdict.status, "changed");
+  assert.deepEqual(diff.verdict.reasons, ["inventory changed without a clear pass/fail signal"]);
+});
+
+test("reports commit-only inventory changes instead of unchanged", () => {
+  const diff = compareSessions("No commit", "Recorded abc1234");
+
+  assert.equal(diff.verdict.status, "changed");
+});
