@@ -36,6 +36,10 @@ sessiondiff compare <before.log> <after.log> --format markdown
 sessiondiff summarize <run.log> --format json
 ```
 
+Both commands accept `--format markdown|json`, `--format=markdown|json`, or
+the short `-f markdown|json` form. Other options are rejected; input paths are
+positional arguments.
+
 See [supported inputs](docs/supported-inputs.md) for the current parser
 contract and the privacy boundaries to review before sharing generated reports.
 
