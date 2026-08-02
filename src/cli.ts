@@ -73,6 +73,8 @@ function parseArgs(argv: string[]): ParsedArgs {
         throw new Error("--format must be markdown or json");
       }
       format = value;
+    } else if (arg.startsWith("-")) {
+      throw new Error(`unknown option: ${arg}`);
     } else {
       files.push(arg);
     }
@@ -93,6 +95,9 @@ Usage:
 Formats:
   markdown  Human-readable output (default)
   json      Stable machine-readable output
+
+Options:
+  -f, --format <format>  Select markdown or json output
 `;
 }
 

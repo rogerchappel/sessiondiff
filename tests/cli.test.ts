@@ -75,6 +75,38 @@ test("rejects unsupported output formats", async () => {
   );
 });
 
+test("rejects unknown summarize options directly", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/src/cli.js", "summarize", "tests/fixtures/tool-blocks.log", "--verbose"]),
+    /unknown option: --verbose/
+  );
+});
+
+test("rejects unknown compare options directly", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, [
+      "dist/src/cli.js",
+      "compare",
+      "tests/fixtures/before.log",
+      "tests/fixtures/after.jsonl",
+      "-x"
+    ]),
+    /unknown option: -x/
+  );
+});
+
+test("accepts documented short format option", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [
+    "dist/src/cli.js",
+    "summarize",
+    "tests/fixtures/tool-blocks.log",
+    "-f",
+    "json"
+  ]);
+
+  assert.equal((JSON.parse(stdout) as { source: string }).source, "tool-blocks.log");
+});
+
 test("fixture files remain available for smoke checks", async () => {
   const fixture = await readFile("tests/fixtures/before.log", "utf8");
 
