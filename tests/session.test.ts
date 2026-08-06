@@ -96,8 +96,34 @@ test("reports signal-only inventory changes instead of unchanged", () => {
   assert.deepEqual(diff.verdict.reasons, ["inventory changed without a clear pass/fail signal"]);
 });
 
-test("reports commit-only inventory changes instead of unchanged", () => {
-  const diff = compareSessions("No commit", "Recorded abc1234");
+test("reports equal-cardinality command substitutions instead of unchanged", () => {
+  const diff = compareSessions("$ npm test", "$ npm run build");
 
   assert.equal(diff.verdict.status, "changed");
+  assert.deepEqual(diff.verdict.reasons, ["inventory changed without a clear pass/fail signal"]);
+  assert.deepEqual(diff.changes.commands.added.map(({ command }) => command), ["npm run build"]);
+  assert.deepEqual(diff.changes.commands.removed.map(({ command }) => command), ["npm test"]);
+});
+
+test("reports equal-cardinality file substitutions instead of unchanged", () => {
+  const diff = compareSessions("changed src/a.ts", "changed src/b.ts");
+
+  assert.equal(diff.verdict.status, "changed");
+  assert.deepEqual(diff.changes.files.added, ["src/b.ts"]);
+  assert.deepEqual(diff.changes.files.removed, ["src/a.ts"]);
+});
+
+test("reports equal-cardinality commit substitutions instead of unchanged", () => {
+  const diff = compareSessions("commit abcdef1", "commit bcdefa2");
+
+  assert.equal(diff.verdict.status, "changed");
+  assert.deepEqual(diff.changes.commits.added, ["bcdefa2"]);
+  assert.deepEqual(diff.changes.commits.removed, ["abcdef1"]);
+});
+
+test("keeps identical keyed inventories unchanged", () => {
+  const diff = compareSessions("$ npm test\nchanged src/a.ts", "$ npm test\nchanged src/a.ts");
+
+  assert.equal(diff.verdict.status, "unchanged");
+  assert.deepEqual(diff.verdict.reasons, []);
 });

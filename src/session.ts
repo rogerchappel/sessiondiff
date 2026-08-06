@@ -91,20 +91,21 @@ export function summarizeSession(text: string, source = "session"): SessionSumma
 export function compareSessions(beforeText: string, afterText: string, beforeSource = "before", afterSource = "after"): SessionDiff {
   const before = summarizeSession(beforeText, beforeSource);
   const after = summarizeSession(afterText, afterSource);
+  const changes = {
+    commands: diffBy(before.commands, after.commands, commandKey),
+    files: diffBy(before.files, after.files, (value: string) => value),
+    commits: diffBy(before.commits, after.commits, (value: string) => value),
+    tests: diffBy(before.tests, after.tests, testKey),
+    approvals: diffBy(before.approvals, after.approvals, signalKey),
+    blockers: diffBy(before.blockers, after.blockers, signalKey),
+    finalClaims: diffBy(before.finalClaims, after.finalClaims, (value: string) => value)
+  };
 
   return {
     before,
     after,
-    changes: {
-      commands: diffBy(before.commands, after.commands, commandKey),
-      files: diffBy(before.files, after.files, (value) => value),
-      commits: diffBy(before.commits, after.commits, (value) => value),
-      tests: diffBy(before.tests, after.tests, testKey),
-      approvals: diffBy(before.approvals, after.approvals, signalKey),
-      blockers: diffBy(before.blockers, after.blockers, signalKey),
-      finalClaims: diffBy(before.finalClaims, after.finalClaims, (value) => value)
-    },
-    verdict: classifyDiff(before, after)
+    changes,
+    verdict: classifyDiff(before, after, changes)
   };
 }
 
@@ -283,7 +284,7 @@ function inferTestStatus(text: string): TestResult["status"] {
   return "unknown";
 }
 
-function classifyDiff(before: SessionSummary, after: SessionSummary): DiffVerdict {
+function classifyDiff(before: SessionSummary, after: SessionSummary, changes: SessionDiff["changes"]): DiffVerdict {
   const reasons: string[] = [];
   const beforeFailed = before.tests.filter((test) => test.status === "fail").length;
   const afterFailed = after.tests.filter((test) => test.status === "fail").length;
@@ -310,14 +311,7 @@ function classifyDiff(before: SessionSummary, after: SessionSummary): DiffVerdic
   }
 
   if (reasons.length === 0) {
-    const changed =
-      before.commands.length !== after.commands.length ||
-      before.files.length !== after.files.length ||
-      before.commits.length !== after.commits.length ||
-      before.tests.length !== after.tests.length ||
-      before.approvals.length !== after.approvals.length ||
-      before.blockers.length !== after.blockers.length ||
-      before.finalClaims.length !== after.finalClaims.length;
+    const changed = Object.values(changes).some(({ added, removed }) => added.length > 0 || removed.length > 0);
     return { status: changed ? "changed" : "unchanged", reasons: changed ? ["inventory changed without a clear pass/fail signal"] : [] };
   }
 

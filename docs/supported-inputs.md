@@ -34,6 +34,12 @@ Input paths are positional. The CLI accepts `--format markdown|json`,
 `--format=markdown|json`, and `-f markdown|json`; unknown options are rejected
 instead of being interpreted as paths.
 
+Comparison verdicts use the same keyed added and removed inventories rendered
+in JSON and Markdown. Replacing a command, file, commit, test, approval,
+blocker, or final claim is therefore reported as `changed` even when the before
+and after inventories contain the same number of entries. Test pass/fail and
+blocker changes continue to take precedence as `improved` or `regressed`.
+
 ## Boundaries
 
 - The CLI does not call hosted model, agent, or transcript APIs.
