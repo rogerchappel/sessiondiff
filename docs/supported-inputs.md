@@ -39,6 +39,10 @@ in JSON and Markdown. Replacing a command, file, commit, test, approval,
 blocker, or final claim is therefore reported as `changed` even when the before
 and after inventories contain the same number of entries. Test pass/fail and
 blocker changes continue to take precedence as `improved` or `regressed`.
+Common numeric summaries such as `0 failed`, `failures: 0`, and `0 errors`
+count as passing evidence. A nonzero count or another explicit failure on the
+same line still takes precedence; the parser does not interpret arbitrary
+framework-specific result tables.
 
 ## Boundaries
 

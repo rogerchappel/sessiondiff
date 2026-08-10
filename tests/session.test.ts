@@ -71,6 +71,33 @@ test("keeps mixed JSONL and explicit tool evidence stable in comparisons", () =>
   ]);
 });
 
+test("treats zero-result failure summaries as passing evidence", () => {
+  const summary = summarizeSession([
+    "Tests: 10 passed, 0 failed",
+    "Build completed with 0 errors",
+    "Suites: failures: 0, passed: 4"
+  ].join("\n"));
+
+  assert.deepEqual(summary.tests.map(({ status }) => status), ["pass", "pass", "pass"]);
+});
+
+test("does not regress when a passing summary adds a zero failure count", () => {
+  const diff = compareSessions("Tests: 10 passed", "Tests: 10 passed, 0 failed");
+
+  assert.notEqual(diff.verdict.status, "regressed");
+  assert.equal(diff.after.tests[0]?.status, "pass");
+});
+
+test("keeps nonzero and explicit failures ahead of passing evidence", () => {
+  const summary = summarizeSession([
+    "Tests: 10 passed, 1 failed",
+    "Tests passed, but lint failed",
+    "Build: 0 errors; integration test failure"
+  ].join("\n"));
+
+  assert.deepEqual(summary.tests.map(({ status }) => status), ["fail", "fail", "fail"]);
+});
+
 test("treats losing a passing check as a regression", () => {
   const diff = compareSessions("Tests passed", "Tests pending");
 

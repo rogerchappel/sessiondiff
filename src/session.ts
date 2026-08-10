@@ -275,10 +275,20 @@ function addMatches(
 
 function inferTestStatus(text: string): TestResult["status"] {
   const normalized = text.toLowerCase();
-  if (/\b(?:fail|failed|failure|error|not ok)\b/.test(normalized)) {
+  const zeroFailurePatterns = [
+    /\b0\s+(?:tests?\s+)?(?:fail(?:ed|ures?)?|errors?)\b/g,
+    /\b(?:fail(?:ed|ures?)?|errors?)\s*[:=]?\s*0\b/g
+  ];
+  const hasZeroFailures = zeroFailurePatterns.some((pattern) => pattern.test(normalized));
+  const withoutZeroFailures = zeroFailurePatterns.reduce((value, pattern) => value.replace(pattern, ""), normalized);
+
+  if (/\b(?:fail|failed|failure|error|not ok)\b/.test(withoutZeroFailures)) {
     return "fail";
   }
   if (/\b(?:pass|passed|passes|ok|success|validated|verified)\b/.test(normalized)) {
+    return "pass";
+  }
+  if (hasZeroFailures) {
     return "pass";
   }
   return "unknown";
