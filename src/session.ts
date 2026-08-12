@@ -9,7 +9,7 @@ const toolEndPattern = /^\s*(?:<\/tool>|```)\s*$/;
 const finalClaimPattern =
   /\b(?:final|summary|done|completed|implemented|fixed|changed|verification|verified|tests?|smoke|build)\b/i;
 const testPattern =
-  /\b(?:pass(?:ed|es)?|fail(?:ed|ure)?|error|ok|not ok|tests?|test suite|build|typecheck|lint|smoke|validated?|verification)\b/i;
+  /\b(?:pass(?:ed|es|ing)?|fail(?:ed|ing|ures?)?|error|ok|not ok|tests?|test suite|build|typecheck|lint|smoke|validated?|verification)\b/i;
 const approvalPattern =
   /\b(?:approval|approved|permission|confirmed|consent|human\s+confirmed|asked\s+before|requires\s+approval)\b/i;
 const blockerPattern =
@@ -276,16 +276,16 @@ function addMatches(
 function inferTestStatus(text: string): TestResult["status"] {
   const normalized = text.toLowerCase();
   const zeroFailurePatterns = [
-    /\b0\s+(?:tests?\s+)?(?:fail(?:ed|ures?)?|errors?)\b/g,
-    /\b(?:fail(?:ed|ures?)?|errors?)\s*[:=]?\s*0\b/g
+    /\b0\s+(?:tests?\s+)?(?:fail(?:ed|ing|ures?)?|errors?)\b/g,
+    /\b(?:fail(?:ed|ing|ures?)?|errors?)\s*[:=]?\s*0\b/g
   ];
   const hasZeroFailures = zeroFailurePatterns.some((pattern) => pattern.test(normalized));
   const withoutZeroFailures = zeroFailurePatterns.reduce((value, pattern) => value.replace(pattern, ""), normalized);
 
-  if (/\b(?:fail|failed|failure|error|not ok)\b/.test(withoutZeroFailures)) {
+  if (/\b(?:fail|failed|failing|failure|error|not ok)\b/.test(withoutZeroFailures)) {
     return "fail";
   }
-  if (/\b(?:pass|passed|passes|ok|success|validated|verified)\b/.test(normalized)) {
+  if (/\b(?:pass|passed|passes|passing|ok|success|validated|verified)\b/.test(normalized)) {
     return "pass";
   }
   if (hasZeroFailures) {

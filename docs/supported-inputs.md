@@ -39,10 +39,13 @@ in JSON and Markdown. Replacing a command, file, commit, test, approval,
 blocker, or final claim is therefore reported as `changed` even when the before
 and after inventories contain the same number of entries. Test pass/fail and
 blocker changes continue to take precedence as `improved` or `regressed`.
-Common numeric summaries such as `0 failed`, `failures: 0`, and `0 errors`
-count as passing evidence. A nonzero count or another explicit failure on the
-same line still takes precedence; the parser does not interpret arbitrary
-framework-specific result tables.
+Common numeric summaries such as `10 passing`, `1 failing`, `0 failed`,
+`failures: 0`, and `0 errors` contribute pass/fail evidence in plain text and
+nested JSONL strings. A nonzero failing count or another explicit failure on
+the same line takes precedence over passing evidence, while a zero failing
+count with a positive passing count is considered passing. These heuristics
+recognize summary phrases, not arbitrary framework-specific result tables or
+structured numeric fields.
 
 ## Boundaries
 
