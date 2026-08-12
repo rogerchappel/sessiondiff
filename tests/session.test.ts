@@ -98,6 +98,44 @@ test("keeps nonzero and explicit failures ahead of passing evidence", () => {
   assert.deepEqual(summary.tests.map(({ status }) => status), ["fail", "fail", "fail"]);
 });
 
+test("recognizes numeric passing and failing summaries in plain text", () => {
+  const summary = summarizeSession([
+    "1 failing",
+    "10 passing, 1 failing",
+    "10 passing, 0 failing"
+  ].join("\n"));
+
+  assert.deepEqual(summary.tests.map(({ status }) => status), ["fail", "fail", "pass"]);
+});
+
+test("recognizes numeric passing and failing summaries in nested JSONL strings", () => {
+  const summary = summarizeSession(JSON.stringify({
+    result: { reports: ["24 passing", { output: "24 passing, failing: 0" }, "2 failing, 24 passing"] }
+  }));
+
+  assert.deepEqual(summary.tests.map(({ status }) => status), ["pass", "pass", "fail"]);
+});
+
+test("treats a new nonzero failing count as a regression", () => {
+  const diff = compareSessions("10 passing, 0 failing", "10 passing, 1 failing");
+
+  assert.equal(diff.verdict.status, "regressed");
+  assert.deepEqual(diff.verdict.reasons, [
+    "more failing checks (0 -> 1)",
+    "fewer passing checks (1 -> 0)"
+  ]);
+});
+
+test("treats clearing a numeric failing count as an improvement", () => {
+  const diff = compareSessions("10 passing, 1 failing", "10 passing, 0 failing");
+
+  assert.equal(diff.verdict.status, "improved");
+  assert.deepEqual(diff.verdict.reasons, [
+    "fewer failing checks (1 -> 0)",
+    "more passing checks (0 -> 1)"
+  ]);
+});
+
 test("treats losing a passing check as a regression", () => {
   const diff = compareSessions("Tests passed", "Tests pending");
 
