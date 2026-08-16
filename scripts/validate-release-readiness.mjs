@@ -11,6 +11,22 @@ function requireField(condition, message) {
   if (!condition) failures.push(message);
 }
 
+function countMatches(value, pattern) {
+  return [...value.matchAll(pattern)].length;
+}
+
+function validateArtifactFlow(file, workflow, { githubRelease = false } = {}) {
+  const label = `.github/workflows/${file}`;
+  requireField(countMatches(workflow, /\bnpm pack\b/g) === 1, `${label} must pack exactly once`);
+  requireField(/id:\s*package[\s\S]*GITHUB_OUTPUT/.test(workflow), `${label} must capture the packed archive as the package step output`);
+  requireField(/npm publish\s+["']?\$\{\{\s*steps\.package\.outputs\.archive\s*\}\}/.test(workflow), `${label} must publish the captured archive`);
+  if (githubRelease) {
+    requireField(/gh release create[\s\S]*\$\{\{\s*steps\.package\.outputs\.archive\s*\}\}/.test(workflow), `${label} must attach the captured archive to the GitHub release`);
+  } else {
+    requireField(/npm publish[^\n]*--dry-run/.test(workflow), `${label} must dry-run npm publication`);
+  }
+}
+
 requireField(packageJson.repository, 'package.json must declare repository metadata');
 requireField(Array.isArray(packageJson.files) && packageJson.files.length > 0, 'package.json must declare a non-empty files allowlist');
 requireField(scripts['package:smoke'], 'package.json scripts must include package:smoke');
@@ -28,6 +44,13 @@ if (fs.existsSync(workflowDir)) {
 
   const combined = workflowFiles.map((file) => fs.readFileSync(path.join(workflowDir, file), 'utf8')).join('\n');
   requireField(/release:check/.test(combined), 'CI workflows must run npm run release:check');
+
+  const releasePath = path.join(workflowDir, 'release.yml');
+  const dryRunPath = path.join(workflowDir, 'release-dry-run.yml');
+  requireField(fs.existsSync(releasePath), '.github/workflows/release.yml must exist');
+  requireField(fs.existsSync(dryRunPath), '.github/workflows/release-dry-run.yml must exist');
+  if (fs.existsSync(releasePath)) validateArtifactFlow('release.yml', fs.readFileSync(releasePath, 'utf8'), { githubRelease: true });
+  if (fs.existsSync(dryRunPath)) validateArtifactFlow('release-dry-run.yml', fs.readFileSync(dryRunPath, 'utf8'));
 }
 
 if (failures.length > 0) {
