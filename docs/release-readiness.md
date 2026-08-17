@@ -21,6 +21,8 @@ Run `npm run package:smoke` when available and review the dry-run file list for 
 
 The pull-request release dry run packs once, captures npm's reported tarball filename, and passes that exact file to `npm publish --dry-run`. On a version tag, the release workflow uses the same flow with trusted publishing and provenance, then attaches the already-published tarball to the GitHub release. Do not replace the captured filename with a glob or run `npm pack` again between publication and upload.
 
+`releasebox.config.json` is the reviewed release policy: `publishNpm` and `createGithubRelease` must remain enabled while the workflows perform those actions. `npm run release:readiness` fails when the policy and workflows disagree.
+
 ## Notes
 
 - Keep README examples aligned with the fixture-backed smoke command.
