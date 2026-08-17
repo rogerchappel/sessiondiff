@@ -12,6 +12,7 @@ const validator = path.resolve("scripts/validate-release-readiness.mjs");
 async function fixture() {
   const root = await mkdtemp(path.join(tmpdir(), "sessiondiff-release-"));
   await cp("package.json", path.join(root, "package.json"));
+  await cp("releasebox.config.json", path.join(root, "releasebox.config.json"));
   await cp(".github", path.join(root, ".github"), { recursive: true });
   return root;
 }
@@ -42,6 +43,24 @@ test("release readiness rejects omitted npm publication", async () => {
     const workflow = await readFile(file, "utf8");
     await writeFile(file, workflow.replace(/^      - name: Publish package to npm\n        run: npm publish.*\n/m, ""));
   }, /must publish the captured archive/);
+});
+
+test("release readiness rejects npm publication disabled in release policy", async () => {
+  await expectFailure(async (root) => {
+    const file = path.join(root, "releasebox.config.json");
+    const config = JSON.parse(await readFile(file, "utf8"));
+    config.release.publishNpm = false;
+    await writeFile(file, `${JSON.stringify(config, null, 2)}\n`);
+  }, /release\.publishNpm must match npm publication/);
+});
+
+test("release readiness rejects GitHub release creation disabled in release policy", async () => {
+  await expectFailure(async (root) => {
+    const file = path.join(root, "releasebox.config.json");
+    const config = JSON.parse(await readFile(file, "utf8"));
+    config.release.createGithubRelease = false;
+    await writeFile(file, `${JSON.stringify(config, null, 2)}\n`);
+  }, /release\.createGithubRelease must match GitHub release creation/);
 });
 
 test("release readiness rejects repacking", async () => {

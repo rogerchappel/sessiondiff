@@ -4,6 +4,8 @@ import path from 'node:path';
 const root = process.cwd();
 const packagePath = path.join(root, 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+const releaseboxPath = path.join(root, 'releasebox.config.json');
+const releaseboxConfig = JSON.parse(fs.readFileSync(releaseboxPath, 'utf8'));
 const scripts = packageJson.scripts ?? {};
 const failures = [];
 
@@ -25,6 +27,26 @@ function validateArtifactFlow(file, workflow, { githubRelease = false } = {}) {
   } else {
     requireField(/npm publish[^\n]*--dry-run/.test(workflow), `${label} must dry-run npm publication`);
   }
+}
+
+function validateReleasePolicy(releaseWorkflow, dryRunWorkflow) {
+  const release = releaseboxConfig.release ?? {};
+  const publishesNpm = /\bnpm publish\b/.test(releaseWorkflow);
+  const validatesNpmPublish = /\bnpm publish\b[^\n]*--dry-run/.test(dryRunWorkflow);
+  const createsGithubRelease = /\bgh release create\b/.test(releaseWorkflow);
+
+  requireField(
+    release.publishNpm === publishesNpm,
+    `releasebox.config.json release.publishNpm must match npm publication in .github/workflows/release.yml`,
+  );
+  requireField(
+    release.publishNpm === validatesNpmPublish,
+    `releasebox.config.json release.publishNpm must match npm publication validation in .github/workflows/release-dry-run.yml`,
+  );
+  requireField(
+    release.createGithubRelease === createsGithubRelease,
+    `releasebox.config.json release.createGithubRelease must match GitHub release creation in .github/workflows/release.yml`,
+  );
 }
 
 requireField(packageJson.repository, 'package.json must declare repository metadata');
@@ -49,8 +71,13 @@ if (fs.existsSync(workflowDir)) {
   const dryRunPath = path.join(workflowDir, 'release-dry-run.yml');
   requireField(fs.existsSync(releasePath), '.github/workflows/release.yml must exist');
   requireField(fs.existsSync(dryRunPath), '.github/workflows/release-dry-run.yml must exist');
-  if (fs.existsSync(releasePath)) validateArtifactFlow('release.yml', fs.readFileSync(releasePath, 'utf8'), { githubRelease: true });
-  if (fs.existsSync(dryRunPath)) validateArtifactFlow('release-dry-run.yml', fs.readFileSync(dryRunPath, 'utf8'));
+  if (fs.existsSync(releasePath) && fs.existsSync(dryRunPath)) {
+    const releaseWorkflow = fs.readFileSync(releasePath, 'utf8');
+    const dryRunWorkflow = fs.readFileSync(dryRunPath, 'utf8');
+    validateArtifactFlow('release.yml', releaseWorkflow, { githubRelease: true });
+    validateArtifactFlow('release-dry-run.yml', dryRunWorkflow);
+    validateReleasePolicy(releaseWorkflow, dryRunWorkflow);
+  }
 }
 
 if (failures.length > 0) {
