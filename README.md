@@ -63,7 +63,8 @@ npm run release:check
 ```
 
 `npm run release:readiness` validates repository metadata, package contents,
-package smoke coverage, and CI placeholder cleanup. `npm run release:check`
+package smoke coverage, CI placeholder cleanup, and the single-artifact npm and
+GitHub publication flow. `npm run release:check`
 runs the TypeScript check, compiled tests, fixture smoke commands, and npm pack
 dry-run.
 
