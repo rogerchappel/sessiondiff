@@ -47,6 +47,12 @@ count with a positive passing count is considered passing. These heuristics
 recognize summary phrases, not arbitrary framework-specific result tables or
 structured numeric fields.
 
+Approval and blocker phrases are also checked for common local negations.
+Phrases such as `not blocked`, `no blocker`, `no approval required`, and
+`approval is not required` do not create active signals in plain text or nested
+JSONL strings. Positive phrases elsewhere in the same input, such as `Blocked:
+missing input` or `Approval required`, remain detectable.
+
 ## Boundaries
 
 - The CLI does not call hosted model, agent, or transcript APIs.

@@ -14,6 +14,9 @@ const approvalPattern =
   /\b(?:approval|approved|permission|confirmed|consent|human\s+confirmed|asked\s+before|requires\s+approval)\b/i;
 const blockerPattern =
   /\b(?:blocked|blocker|cannot\s+continue|stuck|needs\s+(?:user|human)|missing\s+(?:credential|token|file|input)|permission\s+denied)\b/i;
+const negatedApprovalPattern =
+  /\b(?:no\s+approval(?:\s+(?:is\s+)?required)?|approval\s+(?:is\s+)?not\s+required|does(?:n't|\s+not)\s+require\s+approval)\b/gi;
+const negatedBlockerPattern = /\b(?:not\s+blocked|no\s+blockers?|without\s+(?:a\s+)?blocker)\b/gi;
 const commandFieldNames = new Set(["command", "cmd", "shell", "input", "args"]);
 
 export function summarizeSession(text: string, source = "session"): SessionSummary {
@@ -132,11 +135,11 @@ function ingestPlainLine(
     });
   }
 
-  if (approvalPattern.test(line)) {
+  if (hasActiveSignal(line, approvalPattern, negatedApprovalPattern)) {
     summary.approvals.push(toSignal(line, lineNumber));
   }
 
-  if (blockerPattern.test(line)) {
+  if (hasActiveSignal(line, blockerPattern, negatedBlockerPattern)) {
     summary.blockers.push(toSignal(line, lineNumber));
   }
 
@@ -207,10 +210,10 @@ function ingestJsonValue(
       if (testPattern.test(raw)) {
         summary.tests.push({ text: compact(raw), status: inferTestStatus(raw), line: lineNumber });
       }
-      if (approvalPattern.test(raw)) {
+      if (hasActiveSignal(raw, approvalPattern, negatedApprovalPattern)) {
         summary.approvals.push(toSignal(raw, lineNumber));
       }
-      if (blockerPattern.test(raw)) {
+      if (hasActiveSignal(raw, blockerPattern, negatedBlockerPattern)) {
         summary.blockers.push(toSignal(raw, lineNumber));
       }
       if (finalClaimPattern.test(raw)) {
@@ -220,6 +223,10 @@ function ingestJsonValue(
       ingestJsonValue(raw, lineNumber, summary, files, commits);
     }
   }
+}
+
+function hasActiveSignal(text: string, signalPattern: RegExp, negatedPattern: RegExp): boolean {
+  return signalPattern.test(text.replace(negatedPattern, ""));
 }
 
 function parseJsonLine(line: string): unknown {

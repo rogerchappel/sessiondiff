@@ -71,6 +71,40 @@ test("keeps mixed JSONL and explicit tool evidence stable in comparisons", () =>
   ]);
 });
 
+test("ignores negated approval and blocker phrases in plain text", () => {
+  const summary = summarizeSession([
+    "Tests passed; not blocked and no approval required.",
+    "There is no blocker and approval is not required."
+  ].join("\n"));
+
+  assert.deepEqual(summary.approvals, []);
+  assert.deepEqual(summary.blockers, []);
+});
+
+test("ignores negated signals in nested JSONL strings while retaining active signals", () => {
+  const summary = summarizeSession(JSON.stringify({
+    result: {
+      messages: [
+        "not blocked",
+        { approval: "no approval required" },
+        "Blocked: missing input",
+        { review: "Approval required" }
+      ]
+    }
+  }));
+
+  assert.deepEqual(summary.approvals, [{ text: "Approval required", line: 1 }]);
+  assert.deepEqual(summary.blockers, [{ text: "Blocked: missing input", line: 1 }]);
+});
+
+test("does not regress when passing evidence contains only negated signals", () => {
+  const diff = compareSessions("", "Tests passed; not blocked and no approval required.");
+
+  assert.notEqual(diff.verdict.status, "regressed");
+  assert.equal(diff.after.approvals.length, 0);
+  assert.equal(diff.after.blockers.length, 0);
+});
+
 test("treats zero-result failure summaries as passing evidence", () => {
   const summary = summarizeSession([
     "Tests: 10 passed, 0 failed",
