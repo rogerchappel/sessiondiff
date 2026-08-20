@@ -135,19 +135,28 @@ test("keeps nonzero and explicit failures ahead of passing evidence", () => {
 test("recognizes numeric passing and failing summaries in plain text", () => {
   const summary = summarizeSession([
     "1 failing",
+    "Failures: 2",
+    "2 failures",
+    "Errors: 1",
     "10 passing, 1 failing",
     "10 passing, 0 failing"
   ].join("\n"));
 
-  assert.deepEqual(summary.tests.map(({ status }) => status), ["fail", "fail", "pass"]);
+  assert.deepEqual(summary.tests.map(({ status }) => status), ["fail", "fail", "fail", "fail", "fail", "pass"]);
 });
 
 test("recognizes numeric passing and failing summaries in nested JSONL strings", () => {
   const summary = summarizeSession(JSON.stringify({
-    result: { reports: ["24 passing", { output: "24 passing, failing: 0" }, "2 failing, 24 passing"] }
+    result: {
+      reports: [
+        "24 passing",
+        { output: "24 passing, failures: 0" },
+        { nested: ["Failures: 2", "2 errors, 24 passing"] }
+      ]
+    }
   }));
 
-  assert.deepEqual(summary.tests.map(({ status }) => status), ["pass", "pass", "fail"]);
+  assert.deepEqual(summary.tests.map(({ status }) => status), ["pass", "pass", "fail", "fail"]);
 });
 
 test("treats a new nonzero failing count as a regression", () => {
