@@ -52,6 +52,28 @@ test("continues to parse explicit tool-call blocks", () => {
   assert.ok(summary.commands.some(({ command, source }) => command === "npm run build" && source === "tool"));
 });
 
+test("classifies test evidence inside explicit tool-call blocks", () => {
+  const summary = summarizeSession([
+    "tool_call:",
+    "command: npm run verify",
+    "Tests: 8 passed, 0 failed in src/session.ts",
+    "Lint failed",
+    "Build pending",
+    "```"
+  ].join("\n"));
+
+  assert.equal(summary.stats.toolBlocks, 1);
+  assert.deepEqual(summary.commands, [
+    { command: "npm run verify", source: "tool", line: 1 }
+  ]);
+  assert.deepEqual(summary.files, ["src/session.ts"]);
+  assert.deepEqual(summary.tests, [
+    { text: "Tests: 8 passed, 0 failed in src/session.ts", status: "pass", line: 1 },
+    { text: "Lint failed", status: "fail", line: 1 },
+    { text: "Build pending", status: "unknown", line: 1 }
+  ]);
+});
+
 test("keeps mixed JSONL and explicit tool evidence stable in comparisons", () => {
   const before = '{"message":"Tests failed with one blocker"}';
   const after = '{"message":"Tests passed"}\n```tool\ncommand: npm test\n```';
