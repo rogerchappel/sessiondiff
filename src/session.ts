@@ -168,9 +168,11 @@ function ingestToolBlock(
     }
     if (/^(?:cmd|command|shell|input)\s*[:=]/i.test(trimmed)) {
       addCommand(summary, trimmed.replace(/^(?:cmd|command|shell|input)\s*[:=]\s*/i, ""), "tool", lineNumber);
+      addMatches(trimmed, pathPattern, files);
+      addMatches(trimmed, commitPattern, commits, (value) => value.toLowerCase());
+      continue;
     }
-    addMatches(trimmed, pathPattern, files);
-    addMatches(trimmed, commitPattern, commits, (value) => value.toLowerCase());
+    ingestPlainLine(trimmed, lineNumber, summary, files, commits);
   }
 }
 
