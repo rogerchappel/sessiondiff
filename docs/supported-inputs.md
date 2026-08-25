@@ -18,8 +18,10 @@ committing any generated report.
   contribute evidence.
 - Explicit tool-call blocks that start with `tool_call`, `function_call`,
   `<tool>`, or a `` ```tool `` fence and include command, file, or test
-  evidence. Ordinary Markdown and language-tagged code fences are treated as
-  plain text, not tool calls.
+  evidence. Non-command lines in these blocks use the same test pass, fail, and
+  unknown heuristics as plain text and nested JSONL strings; command fields
+  remain command evidence rather than test results. Ordinary Markdown and
+  language-tagged code fences are treated as plain text, not tool calls.
 
 The fixture smoke currently exercises a plain text run, a JSONL run, and a log
 with tool-block sections. Use those fixtures as the best description of the
@@ -41,7 +43,8 @@ and after inventories contain the same number of entries. Test pass/fail and
 blocker changes continue to take precedence as `improved` or `regressed`.
 Common numeric summaries such as `10 passing`, `1 failing`, `failures: 2`,
 `2 failures`, `errors: 1`, and their zero-count forms contribute pass/fail
-evidence in plain text and nested JSONL strings. A nonzero failing count or
+evidence in plain text, nested JSONL strings, and explicit tool-call block
+text. A nonzero failing count or
 another explicit failure on
 the same line takes precedence over passing evidence, while a zero failing
 count with a positive passing count is considered passing. These heuristics
