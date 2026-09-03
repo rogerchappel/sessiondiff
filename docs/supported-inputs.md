@@ -51,6 +51,12 @@ count with a positive passing count is considered passing. These heuristics
 recognize summary phrases, not arbitrary framework-specific result tables or
 structured numeric fields.
 
+Common negated failure statements such as `Build did not fail.`, `Checks did
+not fail.`, and `No tests failed.` are retained as test/check evidence but are
+not classified as failures. This applies consistently to plain text, nested
+JSONL strings, and explicit tool-call block text. Genuine failure phrases such
+as `build failed`, `1 failing`, `errors: 1`, and `not ok` remain failures.
+
 Approval and blocker phrases are also checked for common local negations.
 Phrases such as `not blocked`, `no blocker`, `no approval required`, and
 `approval is not required` do not create active signals in plain text or nested
