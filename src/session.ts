@@ -17,6 +17,10 @@ const blockerPattern =
 const negatedApprovalPattern =
   /\b(?:no\s+approval(?:\s+(?:is\s+)?required)?|approval\s+(?:is\s+)?not\s+required|does(?:n't|\s+not)\s+require\s+approval)\b/gi;
 const negatedBlockerPattern = /\b(?:not\s+blocked|no\s+blockers?|without\s+(?:a\s+)?blocker)\b/gi;
+const negatedFailurePatterns = [
+  /\b(?:did\s+not|didn't)\s+fail\b/gi,
+  /\bno\s+(?:tests?|checks?|builds?|suites?)\s+(?:failed|failing|failures?)\b/gi
+];
 const commandFieldNames = new Set(["command", "cmd", "shell", "input", "args"]);
 
 export function summarizeSession(text: string, source = "session"): SessionSummary {
@@ -289,7 +293,8 @@ function inferTestStatus(text: string): TestResult["status"] {
     /\b(?:fail(?:ed|ing|ures?)?|errors?)\s*[:=]?\s*0\b/g
   ];
   const hasZeroFailures = zeroFailurePatterns.some((pattern) => pattern.test(normalized));
-  const withoutZeroFailures = zeroFailurePatterns.reduce((value, pattern) => value.replace(pattern, ""), normalized);
+  const withoutNegatedFailures = negatedFailurePatterns.reduce((value, pattern) => value.replace(pattern, ""), normalized);
+  const withoutZeroFailures = zeroFailurePatterns.reduce((value, pattern) => value.replace(pattern, ""), withoutNegatedFailures);
 
   if (/\b(?:fail|failed|failing|failures?|errors?|not ok)\b/.test(withoutZeroFailures)) {
     return "fail";
