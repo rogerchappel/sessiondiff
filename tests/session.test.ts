@@ -144,6 +144,29 @@ test("does not regress when a passing summary adds a zero failure count", () => 
   assert.equal(diff.after.tests[0]?.status, "pass");
 });
 
+test("ignores negated failure statements across supported input forms", () => {
+  const summary = summarizeSession([
+    "Build did not fail.",
+    JSON.stringify({ result: { message: "No tests failed." } }),
+    "tool_call:",
+    "Checks did not fail.",
+    "```"
+  ].join("\n"));
+
+  assert.equal(summary.tests.length, 3);
+  assert.deepEqual(summary.tests.map(({ status }) => status), ["unknown", "unknown", "unknown"]);
+
+  const diff = compareSessions("", [
+    "Build did not fail.",
+    JSON.stringify({ result: { message: "No tests failed." } }),
+    "tool_call:",
+    "Checks did not fail.",
+    "```"
+  ].join("\n"));
+
+  assert.notEqual(diff.verdict.status, "regressed");
+});
+
 test("keeps nonzero and explicit failures ahead of passing evidence", () => {
   const summary = summarizeSession([
     "Tests: 10 passed, 1 failed",
