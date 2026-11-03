@@ -12,6 +12,7 @@ const validator = path.resolve("scripts/validate-release-readiness.mjs");
 async function fixture() {
   const root = await mkdtemp(path.join(tmpdir(), "sessiondiff-release-"));
   await cp("package.json", path.join(root, "package.json"));
+  await cp("scripts", path.join(root, "scripts"), { recursive: true });
   await cp("releasebox.config.json", path.join(root, "releasebox.config.json"));
   await cp(".github", path.join(root, ".github"), { recursive: true });
   return root;
@@ -26,6 +27,15 @@ async function expectFailure(mutate: (root: string) => Promise<void>, expected: 
     await rm(root, { recursive: true, force: true });
   }
 }
+
+test("release readiness rejects package scripts that reference missing local files", async () => {
+  await expectFailure(async (root) => {
+    const file = path.join(root, "package.json");
+    const packageJson = JSON.parse(await readFile(file, "utf8"));
+    packageJson.scripts["release:readiness"] = "node scripts/missing-validator.mjs";
+    await writeFile(file, `${JSON.stringify(packageJson, null, 2)}\n`);
+  }, /references missing file/);
+});
 
 test("release readiness accepts the captured single-artifact publication flow", async () => {
   const root = await fixture();
