@@ -128,7 +128,15 @@ function ingestPlainLine(
     addCommand(summary, promptMatch[1], "shell", lineNumber);
   }
 
-  addMatches(line, pathPattern, files);
+  if (promptMatch?.[1]) {
+    addMatches(promptMatch[1], pathPattern, files);
+  }
+  for (const match of line.matchAll(/\b(?:files?|paths?)\s*[:=]\s*(.+)/gi)) {
+    addMatches(match[1], pathPattern, files);
+  }
+  if (promptMatch?.[1] || /\b(?:changed|edited|modified|created|deleted|removed|added|updated)\b/i.test(line)) {
+    addMatches(line, pathPattern, files);
+  }
   addMatches(line, commitPattern, commits, (value) => value.toLowerCase());
 
   if (testPattern.test(line)) {
@@ -176,6 +184,9 @@ function ingestToolBlock(
       addMatches(trimmed, commitPattern, commits, (value) => value.toLowerCase());
       continue;
     }
+    if (/(?:file|path|output|message|text)/i.test(trimmed) || /\.(?:[cm]?[jt]sx?|json|md|ya?ml|toml|lock|sh|py|go|rs|java|rb|php|css|scss|html)\b/i.test(trimmed)) {
+      addMatches(trimmed, pathPattern, files);
+    }
     ingestPlainLine(trimmed, lineNumber, summary, files, commits);
   }
 }
@@ -211,7 +222,11 @@ function ingestJsonValue(
     }
 
     if (typeof raw === "string") {
-      addMatches(raw, pathPattern, files);
+      if (/^(?:file|path|filename)s?$/i.test(key)) {
+        addMatches(raw, pathPattern, files);
+      } else if (/(?:file|path|output|message|text)/i.test(key) || /\.(?:[cm]?[jt]sx?|json|md|ya?ml|toml|lock|sh|py|go|rs|java|rb|php|css|scss|html)\b/i.test(raw)) {
+        addMatches(raw, pathPattern, files);
+      }
       addMatches(raw, commitPattern, commits, (commit) => commit.toLowerCase());
       if (testPattern.test(raw)) {
         summary.tests.push({ text: compact(raw), status: inferTestStatus(raw), line: lineNumber });
