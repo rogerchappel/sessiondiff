@@ -12,6 +12,17 @@ test("ingests each JSONL record exactly once", () => {
   assert.deepEqual(summary.finalClaims, ["Tests failed with one blocker"]);
 });
 
+test("extracts paths from explicit file references, not arbitrary path-like prose", () => {
+  const summary = summarizeSession([
+    "The explanation says src/session.ts is an example, not a changed file.",
+    "Unrelated prose mentions package.json and docs/guide.md in passing.",
+    "Edited files: src/session.ts and docs/guide.md",
+    "$ cat package.json"
+  ].join("\n"));
+
+  assert.deepEqual(summary.files, ["docs/guide.md", "package.json", "src/session.ts"]);
+});
+
 test("recursively ingests evidence in nested JSONL arrays exactly once", () => {
   const summary = summarizeSession(JSON.stringify({
     events: [
