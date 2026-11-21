@@ -1,6 +1,8 @@
 import type { DiffVerdict, ExtractedCommand, SessionDiff, SessionSignal, SessionSummary, TestResult, ValueDiff } from "./index.js";
 
 const commitPattern = /\b[0-9a-f]{7,40}\b/gi;
+const commitContextPattern = /\b(?:commit|commits|changeset)\b/i;
+const nonCommitContextPattern = /\b(?:not|no|without)\s+(?:a\s+)?commit\b/i;
 const pathPattern =
   /(?:(?:\.{1,2}|~)?\/)?(?:[\w@.-]+\/)+(?:[\w@.-]+)(?::\d+)?|\b[\w@.-]+\.(?:[cm]?[jt]sx?|json|md|ya?ml|toml|lock|sh|py|go|rs|java|rb|php|css|scss|html)\b/g;
 const shellPromptPattern = /^\s*(?:[$>]|\+\s|(?:bash|zsh|sh)\s*[-$])\s*(.+)$/i;
@@ -137,7 +139,9 @@ function ingestPlainLine(
   if (promptMatch?.[1] || /\b(?:changed|edited|modified|created|deleted|removed|added|updated)\b/i.test(line)) {
     addMatches(line, pathPattern, files);
   }
-  addMatches(line, commitPattern, commits, (value) => value.toLowerCase());
+  if (commitContextPattern.test(line) && !nonCommitContextPattern.test(line)) {
+    addMatches(line, commitPattern, commits, (value) => value.toLowerCase());
+  }
 
   if (testPattern.test(line)) {
     summary.tests.push({
@@ -181,7 +185,9 @@ function ingestToolBlock(
     if (/^(?:cmd|command|shell|input)\s*[:=]/i.test(trimmed)) {
       addCommand(summary, trimmed.replace(/^(?:cmd|command|shell|input)\s*[:=]\s*/i, ""), "tool", lineNumber);
       addMatches(trimmed, pathPattern, files);
-      addMatches(trimmed, commitPattern, commits, (value) => value.toLowerCase());
+      if (commitContextPattern.test(trimmed) && !nonCommitContextPattern.test(trimmed)) {
+        addMatches(trimmed, commitPattern, commits, (value) => value.toLowerCase());
+      }
       continue;
     }
     if (/(?:file|path|output|message|text)/i.test(trimmed) || /\.(?:[cm]?[jt]sx?|json|md|ya?ml|toml|lock|sh|py|go|rs|java|rb|php|css|scss|html)\b/i.test(trimmed)) {
@@ -227,7 +233,9 @@ function ingestJsonValue(
       } else if (/(?:file|path|output|message|text)/i.test(key) || /\.(?:[cm]?[jt]sx?|json|md|ya?ml|toml|lock|sh|py|go|rs|java|rb|php|css|scss|html)\b/i.test(raw)) {
         addMatches(raw, pathPattern, files);
       }
-      addMatches(raw, commitPattern, commits, (commit) => commit.toLowerCase());
+      if ((commitContextPattern.test(key) || commitContextPattern.test(raw)) && !nonCommitContextPattern.test(raw)) {
+        addMatches(raw, commitPattern, commits, (commit) => commit.toLowerCase());
+      }
       if (testPattern.test(raw)) {
         summary.tests.push({ text: compact(raw), status: inferTestStatus(raw), line: lineNumber });
       }
