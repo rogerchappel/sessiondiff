@@ -3,6 +3,17 @@ import test from "node:test";
 
 import { compareSessions, summarizeSession } from "../src/session.js";
 
+test("only extracts commit hashes from commit-context lines", () => {
+  const summary = summarizeSession([
+    "The word deadbeef is ordinary prose, not a commit.",
+    "Hexadecimal word deadbeef appears here.",
+    "Commit: abcdef1234567890",
+    "See commit abc1234 for the fix."
+  ].join("\n"));
+
+  assert.deepEqual(summary.commits, ["abc1234", "abcdef1234567890"]);
+});
+
 test("ingests each JSONL record exactly once", () => {
   const summary = summarizeSession('{"message":"Tests failed with one blocker"}');
 
