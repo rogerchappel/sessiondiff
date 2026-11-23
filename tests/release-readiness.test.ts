@@ -88,3 +88,12 @@ test("release readiness rejects different npm and GitHub artifacts", async () =>
     await writeFile(file, workflow.replace('"${{ steps.package.outputs.archive }}"\n', '"other.tgz"\n'));
   }, /must attach the captured archive/);
 });
+
+test("release readiness rejects package scripts that invoke missing npm scripts", async () => {
+  await expectFailure(async (root) => {
+    const file = path.join(root, "package.json");
+    const packageJson = JSON.parse(await readFile(file, "utf8"));
+    packageJson.scripts["release:check"] = "npm run check && npm run missing-smoke";
+    await writeFile(file, `${JSON.stringify(packageJson, null, 2)}\n`);
+  }, /references missing npm script missing-smoke/);
+});
