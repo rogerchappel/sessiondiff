@@ -54,6 +54,13 @@ requireField(Array.isArray(packageJson.files) && packageJson.files.length > 0, '
 requireField(scripts['package:smoke'], 'package.json scripts must include package:smoke');
 requireField(scripts['release:check'], 'package.json scripts must include release:check');
 
+for (const command of Object.values(scripts)) {
+  if (typeof command !== 'string') continue;
+  for (const match of command.matchAll(/(?:^|&&|\|\|)\s*npm\s+run\s+([a-zA-Z0-9:_-]+)/g)) {
+    requireField(Object.hasOwn(scripts, match[1]), `package.json script references missing npm script ${match[1]}`);
+  }
+}
+
 for (const [name, command] of Object.entries(scripts)) {
   if (typeof command !== 'string') continue;
   for (const match of command.matchAll(/(?:^|&&|\|\|)\s*node\s+(?:\.\/)?(scripts\/[^\s;&|]+)/g)) {
