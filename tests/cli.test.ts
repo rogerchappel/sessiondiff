@@ -112,3 +112,14 @@ test("fixture files remain available for smoke checks", async () => {
 
   assert.match(fixture, /npm test/);
 });
+
+test("rejects a missing output format", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/src/cli.js", "summarize", "tests/fixtures/tool-blocks.log", "--format"]),
+    (error: NodeJS.ErrnoException & { stderr?: string }) => {
+      assert.equal(error.code, 1);
+      assert.match(error.stderr ?? "", /sessiondiff: --format must be markdown or json/);
+      return true;
+    }
+  );
+});
