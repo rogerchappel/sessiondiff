@@ -70,5 +70,6 @@ jobs:
 
           npm ci
 
+          npm run check
           npm run release:readiness
           npm run release:check
